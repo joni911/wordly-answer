@@ -208,6 +208,18 @@ const WordleSolver = (() => {
         tile.classList.add('filled');
         guesses[currentRow] = getRowWord(currentRow);
         currentCol++;
+
+        if (currentCol === COLS) {
+            for (let i = 0; i < COLS; i++) {
+                const t = board[currentRow][i];
+                if (!tileStates[currentRow][i] || tileStates[currentRow][i] === 'none') {
+                    t.classList.add('absent');
+                    tileStates[currentRow][i] = 'absent';
+                    updateKeyState(t.textContent.toLowerCase(), 'absent');
+                }
+            }
+            recalculate();
+        }
     }
 
     function undoLetter() {
@@ -275,6 +287,7 @@ const WordleSolver = (() => {
             board[row][i].textContent = word[i].toUpperCase();
             board[row][i].classList.add('filled', 'absent');
             tileStates[row][i] = 'absent';
+            updateKeyState(word[i], 'absent');
         }
         guesses[row] = word;
 
@@ -291,10 +304,13 @@ const WordleSolver = (() => {
 
         for (let i = 0; i < COLS; i++) {
             board[currentRow][i].textContent = word[i].toUpperCase();
-            board[currentRow][i].classList.add('filled');
+            board[currentRow][i].classList.add('filled', 'absent');
+            tileStates[currentRow][i] = 'absent';
+            updateKeyState(word[i], 'absent');
         }
         guesses[currentRow] = word;
         currentCol = COLS;
+        recalculate();
     }
 
     function submitGuess() {
