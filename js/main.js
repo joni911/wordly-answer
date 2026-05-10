@@ -23,6 +23,14 @@ const WordleSolver = (() => {
         buildFilterLetters();
         bindEvents();
         loadDictionary();
+        applyTranslations();
+
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('lang') === 'id') {
+            currentLang = 'id';
+            localStorage.setItem('wordly-lang', 'id');
+            applyTranslations();
+        }
     }
 
     function buildBoard() {
@@ -292,7 +300,7 @@ const WordleSolver = (() => {
     function submitGuess() {
         updateCurrentRow();
         if (currentCol < COLS) {
-            showMessage('Masukkan 5 huruf terlebih dahulu!', 'warning');
+            showMessage(t('enterLetters'), 'warning');
             return;
         }
 
@@ -300,31 +308,31 @@ const WordleSolver = (() => {
         guesses[currentRow] = guess;
 
         if (!DictionaryManager.isLoaded()) {
-            showMessage('Kamus belum siap!', 'warning');
+            showMessage(t('dictNotLoaded'), 'warning');
             return;
         }
 
         const hasFlags = tileStates[currentRow].some(s => s !== 'none');
         if (!hasFlags) {
-            showMessage('Klik tile untuk set flag!', 'warning');
+            showMessage(t('setFlags'), 'warning');
             return;
         }
 
         if (tileStates[currentRow].every(s => s === 'correct')) {
-            showMessage('Kata ditemukan!', 'success');
+            showMessage(t('wordFound'), 'success');
             recalculate();
             return;
         }
 
         if (currentRow >= ROWS - 1) {
-            showMessage('Semua baris terpakai.', 'danger');
+            showMessage(t('allRowsUsed'), 'danger');
             recalculate();
             return;
         }
 
         currentRow++;
         updateCurrentRow();
-        showMessage(`Baris ${currentRow + 1}: masukkan kata berikutnya`, 'info');
+        showMessage(t('nextRow').replace('{row}', currentRow + 1), 'info');
     }
 
     function recalculate() {
@@ -395,8 +403,8 @@ const WordleSolver = (() => {
         filterContainer.innerHTML = '';
 
         if (!possibleWords.length) {
-            bestContainer.innerHTML = '<p class="text-danger small">Tidak ada kata cocok</p>';
-            filterContainer.innerHTML = '<p class="text-danger small">Cek flag Anda</p>';
+            bestContainer.innerHTML = `<p class="text-danger small">${t('noMatch')}</p>`;
+            filterContainer.innerHTML = `<p class="text-danger small">${t('checkFlags')}</p>`;
             countLabel.textContent = '';
             return;
         }
@@ -488,7 +496,7 @@ const WordleSolver = (() => {
             filterContainer.appendChild(el);
         });
 
-        countLabel.textContent = `${scored.length} kata sesuai | ${filterCandidates.length} kata uji huruf baru`;
+        countLabel.textContent = `${t('wordsMatch').replace('{count}', scored.length)} | ${t('wordsTest').replace('{test}', filterCandidates.length)}`;
     }
 
     function updateLetterStats() {
@@ -553,8 +561,8 @@ const WordleSolver = (() => {
         const presentInWord = [...knownLetters].filter(c => keyStates[c] === 'present');
 
         const parts = [];
-        if (untested.length) parts.push(`Belum diuji: ${untested.slice(0, 13).join(' ')}`);
-        if (presentInWord.length) parts.push(`Perlu posisi tepat: ${presentInWord.sort().join(', ')}`);
+        if (untested.length) parts.push(`${t('untested')}: ${untested.slice(0, 13).join(' ')}`);
+        if (presentInWord.length) parts.push(`${t('needPosition')}: ${presentInWord.sort().join(', ')}`);
 
         infoEl.textContent = parts.join(' | ');
     }
@@ -602,18 +610,18 @@ const WordleSolver = (() => {
 
     async function loadDictionary() {
         const badge = document.getElementById('dict-badge');
-        badge.textContent = 'Memuat kamus...';
+        badge.textContent = t('loadingDict');
         badge.className = 'badge loading';
 
         try {
             await DictionaryManager.loadDictionary();
             const count = DictionaryManager.getWords().length;
-            badge.textContent = `Kamus siap: ${count} kata`;
+            badge.textContent = t('dictReady').replace('{count}', count.toLocaleString());
             badge.className = 'badge ready';
             possibleWords = DictionaryManager.getWords().slice();
             updateRecommendations();
         } catch (e) {
-            badge.textContent = 'Gagal memuat kamus, menggunakan fallback';
+            badge.textContent = t('dictError');
             badge.className = 'badge error';
         }
     }

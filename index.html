@@ -3,78 +3,174 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Wordle Solver</title>
+
+    <!-- Primary SEO Meta Tags -->
+    <title>Wordle Solver — Free Wordle Answer Helper & Word Finder Tool</title>
+    <meta name="description" content="Free online Wordle Solver tool. Enter your guesses, mark correct and wrong letters, and get smart word recommendations to solve today's Wordle puzzle faster.">
+    <meta name="keywords" content="wordle solver, wordle helper, wordle answer, wordle finder, wordle tool, word game solver, 5 letter word finder, daily wordle help, wordle hints, wordle tips">
+    <meta name="author" content="joni911">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://joni911.github.io/wordly-answer/">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://joni911.github.io/wordly-answer/">
+    <meta property="og:title" content="Wordle Solver — Free Wordle Answer Helper & Word Finder Tool">
+    <meta property="og:description" content="Enter your guesses, mark correct and wrong letters, and get smart word recommendations to solve today's Wordle puzzle faster.">
+    <meta property="og:image" content="https://joni911.github.io/wordly-answer/og-image.png">
+    <meta property="og:site_name" content="Wordle Solver">
+    <meta property="og:locale" content="en_US">
+    <meta property="og:locale:alternate" content="id_ID">
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://joni911.github.io/wordly-answer/">
+    <meta name="twitter:title" content="Wordle Solver — Free Wordle Answer Helper & Word Finder Tool">
+    <meta name="twitter:description" content="Enter your guesses, mark correct and wrong letters, and get smart word recommendations to solve today's Wordle puzzle faster.">
+    <meta name="twitter:image" content="https://joni911.github.io/wordly-answer/og-image.png">
+
+    <!-- Alternate Language Links -->
+    <link rel="alternate" hreflang="en" href="https://joni911.github.io/wordly-answer/">
+    <link rel="alternate" hreflang="id" href="https://joni911.github.io/wordly-answer/?lang=id">
+    <link rel="alternate" hreflang="x-default" href="https://joni911.github.io/wordly-answer/">
+
+    <!-- Additional SEO -->
+    <meta name="theme-color" content="#6aaa64">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Wordle Solver">
+
+    <!-- Structured Data (JSON-LD) -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "Wordle Solver",
+        "description": "Free online Wordle Solver tool. Enter your guesses, mark correct and wrong letters, and get smart word recommendations to solve today's Wordle puzzle faster.",
+        "url": "https://joni911.github.io/wordly-answer/",
+        "applicationCategory": "GameApplication",
+        "operatingSystem": "Any",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "USD"
+        },
+        "author": {
+            "@type": "Person",
+            "name": "joni911",
+            "url": "https://github.com/joni911"
+        },
+        "keywords": ["wordle", "solver", "helper", "word game", "puzzle", "5 letter words"],
+        "browserRequirements": "Requires JavaScript",
+        "softwareVersion": "1.0.0",
+        "inLanguage": ["en", "id"],
+        "screenshot": "https://joni911.github.io/wordly-answer/og-image.png"
+    }
+    </script>
+
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="css/style.css" rel="stylesheet">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect x='5' y='5' width='90' height='90' rx='10' fill='%236aaa64'/><text x='50' y='68' font-size='50' font-weight='bold' text-anchor='middle' fill='white' font-family='Arial'>W</text></svg>">
 </head>
 <body>
-    <div class="container-fluid py-3 px-3">
+    <main class="container-fluid py-3 px-3" role="main">
         <header class="text-center mb-2">
-            <h1 class="fw-bold fs-3">Wordle Solver</h1>
-            <p class="text-muted small mb-1">Klik tombol template → Pilih mode → Klik tile → Submit</p>
+            <div class="d-flex justify-content-between align-items-center mb-1">
+                <div></div>
+                <h1 class="fw-bold fs-3 mb-0">Wordle Solver</h1>
+                <button id="lang-toggle" class="btn btn-outline-secondary btn-sm" onclick="toggleLanguage()" aria-label="Toggle language" title="Switch language">EN</button>
+            </div>
+            <p class="text-muted small mb-1">Free Wordle helper tool — enter guesses, mark letters, get smart recommendations</p>
         </header>
 
-        <section id="dictionary-status" class="text-center mb-2">
-            <span class="badge bg-secondary" id="dict-badge">Memuat kamus...</span>
+        <section id="dictionary-status" class="text-center mb-2" aria-label="Dictionary status">
+            <span class="badge bg-secondary" id="dict-badge">Loading dictionary...</span>
         </section>
 
-        <section id="mode-selector" class="text-center mb-2">
+        <section id="mode-selector" class="text-center mb-2" aria-label="Tile mode selector">
             <span class="fw-bold me-2 small">Mode:</span>
-            <div class="btn-group btn-group-sm" role="group">
+            <div class="btn-group btn-group-sm" role="group" aria-label="Tile status mode">
                 <input type="radio" class="btn-check" name="tileMode" id="mode-correct" value="correct">
-                <label class="btn btn-sm" for="mode-correct">Benar</label>
+                <label class="btn btn-sm" for="mode-correct">Correct</label>
                 <input type="radio" class="btn-check" name="tileMode" id="mode-present" value="present">
-                <label class="btn btn-sm" for="mode-present">Salah Posisi</label>
+                <label class="btn btn-sm" for="mode-present">Wrong Position</label>
                 <input type="radio" class="btn-check" name="tileMode" id="mode-absent" value="absent" checked>
-                <label class="btn btn-sm" for="mode-absent">Salah</label>
+                <label class="btn btn-sm" for="mode-absent">Wrong</label>
             </div>
         </section>
 
-        <section id="game-board" class="mb-2">
+        <section id="game-board" class="mb-2" aria-label="Wordle game board">
             <div id="board" class="board-container"></div>
         </section>
 
-        <section id="keyboard" class="mb-2">
+        <section id="keyboard" class="mb-2" aria-label="Virtual keyboard">
             <div id="keyboard-container"></div>
         </section>
 
-        <section id="controls" class="text-center mb-2">
-            <button id="submit-btn" class="btn btn-primary btn-sm me-1">Submit</button>
-            <button id="undo-btn" class="btn btn-secondary btn-sm me-1">Undo</button>
-            <button id="clear-btn" class="btn btn-warning btn-sm me-1">Clear</button>
-            <button id="reset-btn" class="btn btn-danger btn-sm">Reset</button>
+        <section id="controls" class="text-center mb-2" aria-label="Controls">
+            <button id="submit-btn" class="btn btn-primary btn-sm me-1" aria-label="Submit guess">Submit</button>
+            <button id="undo-btn" class="btn btn-secondary btn-sm me-1" aria-label="Undo last letter">Undo</button>
+            <button id="clear-btn" class="btn btn-warning btn-sm me-1" aria-label="Clear board">Clear</button>
+            <button id="reset-btn" class="btn btn-danger btn-sm" aria-label="Reset game">Reset</button>
         </section>
 
-        <section id="feedback" class="mb-2">
+        <section id="feedback" class="mb-2" aria-label="Messages">
             <div id="message" class="alert alert-info d-none py-1 small" role="alert"></div>
         </section>
 
-        <section id="recommendations" class="mb-2">
+        <section id="recommendations" class="mb-2" aria-label="Word recommendations">
             <div class="row">
                 <div class="col-6">
-                    <h6 class="fw-bold mb-1 small">Kata Terbaik (Skor)</h6>
+                    <h6 class="fw-bold mb-1 small">Best Words (Score)</h6>
                     <div id="best-suggestions" class="suggestions-container"></div>
                 </div>
                 <div class="col-6">
-                    <h6 class="fw-bold mb-1 small">Kata Filter (Eliminasi)</h6>
+                    <h6 class="fw-bold mb-1 small">Filter Words (Elimination)</h6>
                     <div id="filter-suggestions" class="suggestions-container"></div>
                 </div>
             </div>
             <div id="word-count" class="text-center text-muted small mt-1"></div>
         </section>
 
-        <section id="letter-stats" class="mb-2">
-            <h6 class="fw-bold mb-1 small">Statistik Huruf:</h6>
+        <section id="letter-stats" class="mb-2" aria-label="Letter frequency statistics">
+            <h6 class="fw-bold mb-1 small">Letter Stats:</h6>
             <div id="letter-frequency" class="letter-stats-container"></div>
         </section>
 
-        <section id="filter-hints" class="mb-2">
-            <h6 class="fw-bold mb-1 small">Huruf yang Perlu Diuji:</h6>
+        <section id="filter-hints" class="mb-2" aria-label="Letter testing hints">
+            <h6 class="fw-bold mb-1 small">Letters to Test:</h6>
             <div id="filter-letters" class="letter-stats-container"></div>
             <div id="filter-info" class="text-center text-muted small mt-1"></div>
         </section>
-    </div>
+    </main>
 
+    <!-- SEO Content (hidden visually, readable by crawlers) -->
+    <noscript>
+        <section>
+            <h2>Wordle Solver — Free Online Word Game Helper</h2>
+            <p>Our free Wordle Solver tool helps you find the best words to solve today's Wordle puzzle. Enter your guesses, mark each letter as correct, wrong position, or wrong, and get intelligent word recommendations based on 14,855 English 5-letter words.</p>
+            <h3>How to Use Wordle Solver</h3>
+            <ol>
+                <li>Type a 5-letter word or use quick-fill templates (STAIR, LEMON, PUDGY)</li>
+                <li>Click each tile to mark letter status: green (correct), yellow (wrong position), gray (wrong)</li>
+                <li>Click Submit to get word recommendations</li>
+                <li>Repeat until you find the answer</li>
+            </ol>
+            <h3>Features</h3>
+            <ul>
+                <li>Smart word scoring algorithm</li>
+                <li>Letter elimination tracking</li>
+                <li>Frequency-based recommendations</li>
+                <li>Works offline after first load</li>
+                <li>14,855 English words database</li>
+            </ul>
+        </section>
+    </noscript>
+
+    <script src="js/i18n.js"></script>
     <script src="js/dictionary.js"></script>
     <script src="js/main.js"></script>
 </body>

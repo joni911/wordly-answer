@@ -277,6 +277,11 @@ body {
     padding: 4px 8px;
 }
 
+#lang-toggle {
+    font-weight: bold;
+    min-width: 40px;
+}
+
 @media (max-width: 576px) {
     :root {
         --tile-size: 35px;
