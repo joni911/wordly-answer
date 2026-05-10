@@ -1,0 +1,295 @@
+:root {
+    --tile-size: 40px;
+    --tile-gap: 3px;
+    --color-correct: #6aaa64;
+    --color-present: #c9b458;
+    --color-absent: #787c7e;
+    --color-default: #ffffff;
+    --color-border: #d3d6da;
+    --color-filled: #878a8c;
+}
+
+body {
+    background-color: #f8f9fa;
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    font-size: 14px;
+}
+
+.container-fluid {
+    max-width: 700px;
+}
+
+.board-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+}
+
+.board-row-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.board-row {
+    display: flex;
+    gap: var(--tile-gap);
+}
+
+.tile {
+    width: var(--tile-size);
+    height: var(--tile-size);
+    border: 2px solid var(--color-border);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    background-color: #fff;
+    color: #000;
+    transition: all 0.15s ease;
+    cursor: pointer;
+    user-select: none;
+}
+
+.tile.active {
+    border-color: var(--color-filled);
+}
+
+.tile.filled {
+    border-color: var(--color-filled);
+}
+
+.tile.correct {
+    background-color: var(--color-correct);
+    border-color: var(--color-correct);
+    color: #fff;
+}
+
+.tile.present {
+    background-color: var(--color-present);
+    border-color: var(--color-present);
+    color: #fff;
+}
+
+.tile.absent {
+    background-color: var(--color-absent);
+    border-color: var(--color-absent);
+    color: #fff;
+}
+
+.template-btn {
+    min-width: 70px;
+    font-size: 0.75rem;
+    font-weight: bold;
+    padding: 4px 8px;
+    border: 2px solid #d3d6da;
+    background-color: #d3d6da;
+    color: #000;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+.template-btn:hover {
+    background-color: #bbb;
+}
+
+.template-btn.filled {
+    background-color: var(--color-absent);
+    border-color: var(--color-absent);
+    color: #fff;
+}
+
+.template-spacer {
+    min-width: 70px;
+}
+
+.keyboard-container {
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+.keyboard-row {
+    display: flex;
+    justify-content: center;
+    gap: 4px;
+    margin-bottom: 4px;
+}
+
+.key {
+    min-width: 30px;
+    height: 40px;
+    border: none;
+    border-radius: 4px;
+    background-color: #d3d6da;
+    color: #000;
+    font-size: 0.8rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: background-color 0.2s ease;
+    user-select: none;
+}
+
+.key:hover {
+    background-color: #bbb;
+}
+
+.key.correct {
+    background-color: var(--color-correct);
+    color: #fff;
+}
+
+.key.present {
+    background-color: var(--color-present);
+    color: #fff;
+}
+
+.key.absent {
+    background-color: var(--color-absent);
+    color: #fff;
+}
+
+#mode-selector .btn-group label {
+    font-size: 0.75rem;
+    padding: 4px 10px;
+}
+
+#mode-selector .btn-group label[for="mode-correct"] {
+    background-color: var(--color-correct);
+    color: #fff;
+}
+
+#mode-selector .btn-group label[for="mode-present"] {
+    background-color: var(--color-present);
+    color: #fff;
+}
+
+#mode-selector .btn-group label[for="mode-absent"] {
+    background-color: var(--color-absent);
+    color: #fff;
+}
+
+#mode-selector .btn-check:checked + label {
+    box-shadow: 0 0 0 2px #0d6efd;
+}
+
+.suggestions-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 3px;
+    justify-content: center;
+    max-height: 150px;
+    overflow-y: auto;
+}
+
+.suggestion-word {
+    padding: 2px 6px;
+    background-color: #e9ecef;
+    border-radius: 3px;
+    font-weight: 500;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.suggestion-word:hover {
+    background-color: #dee2e6;
+}
+
+.suggestion-word.filter-word {
+    background-color: #fff3cd;
+}
+
+.suggestion-word.filter-word:hover {
+    background-color: #ffe69c;
+}
+
+.letter-stats-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px;
+    justify-content: center;
+}
+
+.letter-stat {
+    width: 22px;
+    height: 22px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 3px;
+    font-weight: bold;
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    background-color: #e9ecef;
+    color: #000;
+}
+
+.letter-stat.likely {
+    background-color: var(--color-correct);
+    color: #fff;
+}
+
+.letter-stat.possible {
+    background-color: var(--color-present);
+    color: #fff;
+}
+
+.letter-stat.unlikely {
+    background-color: var(--color-absent);
+    color: #fff;
+}
+
+.letter-stat.low {
+    background-color: #d3d6da;
+    color: #000;
+}
+
+.letter-stat.very-low {
+    background-color: #e9ecef;
+    color: #aaa;
+}
+
+#dict-badge.loading {
+    background-color: #ffc107;
+    color: #000;
+}
+
+#dict-badge.ready {
+    background-color: #198754;
+}
+
+#dict-badge.error {
+    background-color: #dc3545;
+}
+
+#message {
+    font-size: 0.8rem;
+    padding: 4px 8px;
+}
+
+@media (max-width: 576px) {
+    :root {
+        --tile-size: 35px;
+    }
+
+    .key {
+        min-width: 25px;
+        height: 35px;
+        font-size: 0.7rem;
+    }
+
+    .template-btn {
+        min-width: 55px;
+        font-size: 0.65rem;
+    }
+}

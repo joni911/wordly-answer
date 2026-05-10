@@ -1,0 +1,10 @@
+*.pyc
+__pycache__/
+*.pyo
+.env
+.DS_Store
+data/words-array.txt
+data/words-chunked.txt
+data/words-clean.txt
+erro.txt
+todo.txt
