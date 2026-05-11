@@ -151,6 +151,14 @@ const WordleSolver = (() => {
             if (!tile) return;
             const row = parseInt(tile.dataset.row);
             const col = parseInt(tile.dataset.col);
+
+            // Focus mobile input when tapping empty tile in current row
+            if (row === currentRow && !tile.textContent.trim()) {
+                const mobileInput = document.getElementById('mobile-input');
+                if (mobileInput) mobileInput.focus();
+                return;
+            }
+
             applyModeToTile(row, col);
         });
 
@@ -170,6 +178,37 @@ const WordleSolver = (() => {
             if (!word) return;
             fillWord(word.dataset.word);
         });
+
+        // Mobile keyboard support
+        const mobileInput = document.getElementById('mobile-input');
+        if (mobileInput) {
+            mobileInput.addEventListener('input', (e) => {
+                if (e.inputType === 'deleteContentBackward' || e.inputType === 'deleteContent') {
+                    handleKeyInput('back');
+                    e.target.value = '';
+                    return;
+                }
+                const val = e.target.value;
+                if (val.length > 0) {
+                    for (const char of val) {
+                        if (/^[a-zA-Z]$/.test(char)) {
+                            handleKeyInput(char.toLowerCase());
+                        }
+                    }
+                    e.target.value = '';
+                }
+            });
+
+            mobileInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleKeyInput('enter');
+                } else if (e.key === 'Backspace') {
+                    e.preventDefault();
+                    handleKeyInput('back');
+                }
+            });
+        }
     }
 
     function handlePhysicalKeyboard(e) {
