@@ -114,6 +114,7 @@
             <button id="submit-btn" class="btn btn-primary btn-sm me-1" aria-label="Submit guess">Submit</button>
             <button id="undo-btn" class="btn btn-secondary btn-sm me-1" aria-label="Undo last letter">Undo</button>
             <button id="clear-btn" class="btn btn-warning btn-sm me-1" aria-label="Clear board">Clear</button>
+            <button id="edit-template-btn" class="btn btn-info btn-sm me-1" aria-label="Edit templates">Edit Template</button>
             <button id="reset-btn" class="btn btn-danger btn-sm" aria-label="Reset game">Reset</button>
         </section>
 
@@ -146,6 +147,19 @@
             <div id="filter-info" class="text-center text-muted small mt-1"></div>
         </section>
         <input type="text" id="mobile-input" inputmode="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+
+        <div id="template-modal" class="modal-overlay d-none" aria-label="Edit templates modal">
+            <div class="modal-content">
+                <h6 class="fw-bold mb-2">Edit Templates</h6>
+                <input type="text" class="form-control form-control-sm mb-2 template-input" maxlength="5" placeholder="Template 1">
+                <input type="text" class="form-control form-control-sm mb-2 template-input" maxlength="5" placeholder="Template 2">
+                <input type="text" class="form-control form-control-sm mb-2 template-input" maxlength="5" placeholder="Template 3">
+                <div class="d-flex justify-content-end gap-2">
+                    <button class="btn btn-secondary btn-sm" onclick="WordleSolver.closeTemplateModal()">Cancel</button>
+                    <button class="btn btn-primary btn-sm" onclick="WordleSolver.saveTemplateEdit()">Save</button>
+                </div>
+            </div>
+        </div>
     </main>
 
     <!-- SEO Content (hidden visually, readable by crawlers) -->

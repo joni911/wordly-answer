@@ -304,17 +304,93 @@ body {
     }
 
     :root {
-        --tile-size: 35px;
+        --tile-size: 46px;
+        --tile-gap: 5px;
+    }
+
+    body {
+        font-size: 16px;
+    }
+
+    .board-row-wrapper {
+        gap: 6px;
+    }
+
+    .tile {
+        font-size: 1.25rem;
     }
 
     .key {
-        min-width: 25px;
-        height: 35px;
-        font-size: 0.7rem;
+        min-width: 28px;
+        height: 38px;
+        font-size: 0.8rem;
     }
 
     .template-btn {
-        min-width: 55px;
-        font-size: 0.65rem;
+        min-width: 68px;
+        font-size: 0.8rem;
+        padding: 6px 8px;
     }
+
+    .template-spacer {
+        min-width: 68px;
+    }
+
+    #controls .btn {
+        font-size: 0.9rem;
+        padding: 6px 12px;
+        margin-bottom: 4px;
+    }
+
+    #mode-selector .btn-group label {
+        font-size: 0.85rem;
+        padding: 6px 10px;
+    }
+
+    #recommendations .col-6 {
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+
+    .suggestions-container {
+        max-height: 200px;
+        gap: 5px;
+    }
+
+    .suggestion-word {
+        font-size: 0.85rem;
+        padding: 3px 8px;
+    }
+
+    #mobile-input {
+        height: 50px;
+    }
+}
+
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 300px;
+}
+
+.template-input {
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    font-weight: bold;
+    text-align: center;
 }

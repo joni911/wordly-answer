@@ -6,7 +6,24 @@ const WordleSolver = (() => {
         ['a','s','d','f','g','h','j','k','l'],
         ['enter','z','x','c','v','b','n','m','back']
     ];
-    const TEMPLATE_WORDS = ['stair', 'lemon', 'pudgy'];
+    const DEFAULT_TEMPLATES = ['stair', 'lemon', 'pudgy'];
+
+    function getTemplates() {
+        try {
+            const saved = localStorage.getItem('wordly-templates');
+            if (saved) {
+                const parsed = JSON.parse(saved);
+                if (Array.isArray(parsed) && parsed.length === 3 && parsed.every(w => typeof w === 'string' && w.length === 5)) {
+                    return parsed.map(w => w.toLowerCase());
+                }
+            }
+        } catch (e) {}
+        return DEFAULT_TEMPLATES.slice();
+    }
+
+    function setTemplates(templates) {
+        localStorage.setItem('wordly-templates', JSON.stringify(templates));
+    }
 
     let board = [];
     let tileStates = [];
@@ -61,10 +78,11 @@ const WordleSolver = (() => {
 
             wrapper.appendChild(rowEl);
 
-            if (r < TEMPLATE_WORDS.length) {
+            const templates = getTemplates();
+            if (r < templates.length) {
                 const btn = document.createElement('button');
                 btn.className = 'template-btn';
-                btn.textContent = TEMPLATE_WORDS[r].toUpperCase();
+                btn.textContent = templates[r].toUpperCase();
                 btn.dataset.row = r;
                 btn.addEventListener('click', () => fillTemplate(r));
                 wrapper.appendChild(btn);
@@ -152,20 +170,24 @@ const WordleSolver = (() => {
             const row = parseInt(tile.dataset.row);
             const col = parseInt(tile.dataset.col);
 
-            // Focus mobile input when tapping empty tile in current row
-            if (row === currentRow && !tile.textContent.trim()) {
-                const mobileInput = document.getElementById('mobile-input');
-                if (mobileInput) mobileInput.focus();
-                return;
-            }
+            // Set active position so user can type in any row/col
+            currentRow = row;
+            currentCol = col;
 
-            applyModeToTile(row, col);
+            const mobileInput = document.getElementById('mobile-input');
+            if (mobileInput) mobileInput.focus();
+
+            // If tile has a letter, treat click as mode toggle
+            if (tile.textContent.trim()) {
+                applyModeToTile(row, col);
+            }
         });
 
         document.getElementById('submit-btn').addEventListener('click', submitGuess);
         document.getElementById('undo-btn').addEventListener('click', undoLetter);
         document.getElementById('clear-btn').addEventListener('click', clearBoard);
         document.getElementById('reset-btn').addEventListener('click', resetGame);
+        document.getElementById('edit-template-btn').addEventListener('click', editTemplates);
 
         document.getElementById('best-suggestions').addEventListener('click', (e) => {
             const word = e.target.closest('.suggestion-word');
@@ -239,12 +261,21 @@ const WordleSolver = (() => {
     }
 
     function addLetter(letter) {
-        updateCurrentRow();
-        if (currentCol >= COLS) return;
+        if (currentCol >= COLS) {
+            for (let i = 0; i < COLS; i++) {
+                if (!board[currentRow][i].textContent.trim()) {
+                    currentCol = i;
+                    break;
+                }
+            }
+            if (currentCol >= COLS) return;
+        }
 
         const tile = board[currentRow][currentCol];
         tile.textContent = letter.toUpperCase();
         tile.classList.add('filled');
+        tile.classList.remove('correct', 'present', 'absent');
+        tileStates[currentRow][currentCol] = 'none';
         guesses[currentRow] = getRowWord(currentRow);
         currentCol++;
 
@@ -262,12 +293,30 @@ const WordleSolver = (() => {
     }
 
     function undoLetter() {
-        updateCurrentRow();
-        if (currentCol <= 0) return;
+        if (currentCol <= 0) {
+            let found = false;
+            for (let r = currentRow; r >= 0; r--) {
+                let lastFilled = -1;
+                for (let i = COLS - 1; i >= 0; i--) {
+                    if (board[r][i].textContent.trim()) {
+                        lastFilled = i;
+                        break;
+                    }
+                }
+                if (lastFilled >= 0) {
+                    currentRow = r;
+                    currentCol = lastFilled + 1;
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) return;
+        }
         currentCol--;
         const tile = board[currentRow][currentCol];
         tile.textContent = '';
-        tile.classList.remove('filled');
+        tile.classList.remove('filled', 'correct', 'present', 'absent');
+        tileStates[currentRow][currentCol] = 'none';
         guesses[currentRow] = getRowWord(currentRow);
     }
 
@@ -321,7 +370,8 @@ const WordleSolver = (() => {
     }
 
     function fillTemplate(row) {
-        const word = TEMPLATE_WORDS[row];
+        const templates = getTemplates();
+        const word = templates[row];
         for (let i = 0; i < COLS; i++) {
             board[row][i].textContent = word[i].toUpperCase();
             board[row][i].classList.add('filled', 'absent');
@@ -663,6 +713,45 @@ const WordleSolver = (() => {
         clearBoard();
     }
 
+    function updateTemplateButtons() {
+        const templates = getTemplates();
+        document.querySelectorAll('.template-btn').forEach((btn, i) => {
+            if (templates[i]) {
+                btn.textContent = templates[i].toUpperCase();
+            }
+        });
+    }
+
+    function editTemplates() {
+        const templates = getTemplates();
+        const inputs = document.querySelectorAll('#template-modal .template-input');
+        inputs.forEach((input, i) => {
+            input.value = templates[i] ? templates[i].toUpperCase() : '';
+        });
+        document.getElementById('template-modal').classList.remove('d-none');
+    }
+
+    function closeTemplateModal() {
+        document.getElementById('template-modal').classList.add('d-none');
+    }
+
+    function saveTemplateEdit() {
+        const inputs = document.querySelectorAll('#template-modal .template-input');
+        const newTemplates = [];
+        for (const input of inputs) {
+            const val = input.value.trim().toLowerCase();
+            if (val.length !== 5 || !/^[a-z]+$/.test(val)) {
+                showMessage('Each template must be exactly 5 letters (a-z)', 'warning');
+                return;
+            }
+            newTemplates.push(val);
+        }
+        setTemplates(newTemplates);
+        closeTemplateModal();
+        updateTemplateButtons();
+        showMessage('Templates saved successfully', 'success');
+    }
+
     async function loadDictionary() {
         const badge = document.getElementById('dict-badge');
         badge.textContent = t('loadingDict');
@@ -681,7 +770,7 @@ const WordleSolver = (() => {
         }
     }
 
-    return { init };
+    return { init, editTemplates, closeTemplateModal, saveTemplateEdit };
 })();
 
 document.addEventListener('DOMContentLoaded', () => {
