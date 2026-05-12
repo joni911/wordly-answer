@@ -34,12 +34,29 @@ const WordleSolver = (() => {
     let guesses = [];
     let typingEnabled = false;
 
+    function loadTypingState() {
+        try {
+            const saved = localStorage.getItem('wordly-typing');
+            if (saved !== null) {
+                typingEnabled = saved === 'true';
+            }
+        } catch (e) {}
+    }
+
+    function saveTypingState() {
+        try {
+            localStorage.setItem('wordly-typing', String(typingEnabled));
+        } catch (e) {}
+    }
+
     function init() {
+        loadTypingState();
         buildBoard();
         buildKeyboard();
         buildLetterStats();
         buildFilterLetters();
         bindEvents();
+        applyTypingVisuals();
         loadDictionary();
         applyTranslations();
 
@@ -258,26 +275,42 @@ const WordleSolver = (() => {
 
     function isModalOpen() {
         const modal = document.getElementById('template-modal');
-        return modal && !modal.classList.contains('d-none');
+        return modal && modal.classList.contains('show');
     }
 
-    function toggleTyping() {
-        typingEnabled = !typingEnabled;
+    function applyTypingVisuals() {
         const btn = document.getElementById('typing-toggle-btn');
         const boardEl = document.getElementById('board');
+        if (!btn || !boardEl) return;
         if (typingEnabled) {
             btn.textContent = 'Disable Typing';
             btn.classList.remove('btn-outline-dark');
             btn.classList.add('btn-dark');
             boardEl.classList.add('typing-enabled');
-            showMessage('Typing enabled — click any empty tile to type there', 'info');
         } else {
             btn.textContent = 'Enable Typing';
             btn.classList.remove('btn-dark');
             btn.classList.add('btn-outline-dark');
             boardEl.classList.remove('typing-enabled');
-            showMessage('Typing disabled — click tiles only to change color', 'info');
         }
+        updateActiveCursor();
+    }
+
+    function updateActiveCursor() {
+        document.querySelectorAll('.tile').forEach(t => t.classList.remove('active-cursor'));
+        if (typingEnabled && currentRow >= 0 && currentRow < ROWS && currentCol >= 0 && currentCol < COLS) {
+            const tile = board[currentRow][currentCol];
+            if (tile && !tile.textContent.trim()) {
+                tile.classList.add('active-cursor');
+            }
+        }
+    }
+
+    function toggleTyping() {
+        typingEnabled = !typingEnabled;
+        saveTypingState();
+        applyTypingVisuals();
+        showMessage(typingEnabled ? 'Typing enabled — click any empty tile to type there' : 'Typing disabled — click tiles only to change color', 'info');
     }
 
     function handlePhysicalKeyboard(e) {
@@ -341,6 +374,7 @@ const WordleSolver = (() => {
             }
             recalculate();
         }
+        updateActiveCursor();
     }
 
     function undoLetter() {
@@ -369,6 +403,7 @@ const WordleSolver = (() => {
         tile.classList.remove('filled', 'correct', 'present', 'absent');
         tileStates[currentRow][currentCol] = 'none';
         guesses[currentRow] = getRowWord(currentRow);
+        updateActiveCursor();
     }
 
     function applyModeToTile(row, col) {
@@ -780,11 +815,11 @@ const WordleSolver = (() => {
             input.value = templates[i] ? templates[i].toUpperCase() : '';
         });
         document.getElementById('template-error').classList.add('d-none');
-        document.getElementById('template-modal').classList.remove('d-none');
+        document.getElementById('template-modal').classList.add('show');
     }
 
     function closeTemplateModal() {
-        document.getElementById('template-modal').classList.add('d-none');
+        document.getElementById('template-modal').classList.remove('show');
         document.getElementById('template-error').classList.add('d-none');
     }
 
