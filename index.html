@@ -115,7 +115,8 @@
             <button id="undo-btn" class="btn btn-secondary btn-sm me-1" aria-label="Undo last letter">Undo</button>
             <button id="clear-btn" class="btn btn-warning btn-sm me-1" aria-label="Clear board">Clear</button>
             <button id="edit-template-btn" class="btn btn-info btn-sm me-1" aria-label="Edit templates">Edit Template</button>
-            <button id="reset-btn" class="btn btn-danger btn-sm" aria-label="Reset game">Reset</button>
+            <button id="reset-btn" class="btn btn-danger btn-sm me-1" aria-label="Reset game">Reset</button>
+            <button id="typing-toggle-btn" class="btn btn-outline-dark btn-sm" aria-label="Toggle typing mode">Enable Typing</button>
         </section>
 
         <section id="feedback" class="mb-2" aria-label="Messages">
@@ -151,12 +152,14 @@
         <div id="template-modal" class="modal-overlay d-none" aria-label="Edit templates modal">
             <div class="modal-content">
                 <h6 class="fw-bold mb-2">Edit Templates</h6>
+                <p class="text-muted small mb-2">Enter 3 five-letter words (a-z only)</p>
+                <div id="template-error" class="alert alert-danger py-1 small d-none mb-2"></div>
                 <input type="text" class="form-control form-control-sm mb-2 template-input" maxlength="5" placeholder="Template 1">
                 <input type="text" class="form-control form-control-sm mb-2 template-input" maxlength="5" placeholder="Template 2">
                 <input type="text" class="form-control form-control-sm mb-2 template-input" maxlength="5" placeholder="Template 3">
                 <div class="d-flex justify-content-end gap-2">
-                    <button class="btn btn-secondary btn-sm" onclick="WordleSolver.closeTemplateModal()">Cancel</button>
-                    <button class="btn btn-primary btn-sm" onclick="WordleSolver.saveTemplateEdit()">Save</button>
+                    <button id="template-cancel-btn" class="btn btn-secondary btn-sm">Cancel</button>
+                    <button id="template-save-btn" class="btn btn-primary btn-sm">Save</button>
                 </div>
             </div>
         </div>

@@ -32,6 +32,7 @@ const WordleSolver = (() => {
     let possibleWords = [];
     let keyStates = {};
     let guesses = [];
+    let typingEnabled = false;
 
     function init() {
         buildBoard();
@@ -170,16 +171,18 @@ const WordleSolver = (() => {
             const row = parseInt(tile.dataset.row);
             const col = parseInt(tile.dataset.col);
 
-            // Set active position so user can type in any row/col
-            currentRow = row;
-            currentCol = col;
-
-            const mobileInput = document.getElementById('mobile-input');
-            if (mobileInput) mobileInput.focus();
-
-            // If tile has a letter, treat click as mode toggle
+            // If tile has a letter, always allow mode toggle regardless of typing lock
             if (tile.textContent.trim()) {
                 applyModeToTile(row, col);
+                return;
+            }
+
+            // Only change active typing position if typing is enabled
+            if (typingEnabled) {
+                currentRow = row;
+                currentCol = col;
+                const mobileInput = document.getElementById('mobile-input');
+                if (mobileInput) mobileInput.focus();
             }
         });
 
@@ -188,6 +191,26 @@ const WordleSolver = (() => {
         document.getElementById('clear-btn').addEventListener('click', clearBoard);
         document.getElementById('reset-btn').addEventListener('click', resetGame);
         document.getElementById('edit-template-btn').addEventListener('click', editTemplates);
+        document.getElementById('typing-toggle-btn').addEventListener('click', toggleTyping);
+
+        const templateModal = document.getElementById('template-modal');
+        document.getElementById('template-cancel-btn').addEventListener('click', closeTemplateModal);
+        document.getElementById('template-save-btn').addEventListener('click', saveTemplateEdit);
+        templateModal.addEventListener('click', (e) => {
+            if (e.target === templateModal) closeTemplateModal();
+        });
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && isModalOpen()) {
+                closeTemplateModal();
+            }
+        });
+
+        document.querySelectorAll('#template-modal .template-input').forEach(input => {
+            input.addEventListener('input', (e) => {
+                e.target.value = e.target.value.replace(/[^a-zA-Z]/g, '').toUpperCase();
+                document.getElementById('template-error').classList.add('d-none');
+            });
+        });
 
         document.getElementById('best-suggestions').addEventListener('click', (e) => {
             const word = e.target.closest('.suggestion-word');
@@ -233,7 +256,33 @@ const WordleSolver = (() => {
         }
     }
 
+    function isModalOpen() {
+        const modal = document.getElementById('template-modal');
+        return modal && !modal.classList.contains('d-none');
+    }
+
+    function toggleTyping() {
+        typingEnabled = !typingEnabled;
+        const btn = document.getElementById('typing-toggle-btn');
+        const boardEl = document.getElementById('board');
+        if (typingEnabled) {
+            btn.textContent = 'Disable Typing';
+            btn.classList.remove('btn-outline-dark');
+            btn.classList.add('btn-dark');
+            boardEl.classList.add('typing-enabled');
+            showMessage('Typing enabled — click any empty tile to type there', 'info');
+        } else {
+            btn.textContent = 'Enable Typing';
+            btn.classList.remove('btn-dark');
+            btn.classList.add('btn-outline-dark');
+            boardEl.classList.remove('typing-enabled');
+            showMessage('Typing disabled — click tiles only to change color', 'info');
+        }
+    }
+
     function handlePhysicalKeyboard(e) {
+        if (isModalOpen()) return;
+        if (!typingEnabled) return;
         if (e.key === 'Enter') {
             e.preventDefault();
             handleKeyInput('enter');
@@ -246,6 +295,8 @@ const WordleSolver = (() => {
     }
 
     function handleKeyInput(key) {
+        if (isModalOpen()) return;
+        if (!typingEnabled && key !== 'enter') return;
         if (key === 'enter') {
             submitGuess();
         } else if (key === 'back') {
@@ -728,20 +779,24 @@ const WordleSolver = (() => {
         inputs.forEach((input, i) => {
             input.value = templates[i] ? templates[i].toUpperCase() : '';
         });
+        document.getElementById('template-error').classList.add('d-none');
         document.getElementById('template-modal').classList.remove('d-none');
     }
 
     function closeTemplateModal() {
         document.getElementById('template-modal').classList.add('d-none');
+        document.getElementById('template-error').classList.add('d-none');
     }
 
     function saveTemplateEdit() {
         const inputs = document.querySelectorAll('#template-modal .template-input');
         const newTemplates = [];
-        for (const input of inputs) {
-            const val = input.value.trim().toLowerCase();
+        for (let i = 0; i < inputs.length; i++) {
+            const val = inputs[i].value.trim().toLowerCase();
             if (val.length !== 5 || !/^[a-z]+$/.test(val)) {
-                showMessage('Each template must be exactly 5 letters (a-z)', 'warning');
+                const err = document.getElementById('template-error');
+                err.textContent = `Template ${i + 1} must be exactly 5 letters (a-z). Current: "${inputs[i].value}"`;
+                err.classList.remove('d-none');
                 return;
             }
             newTemplates.push(val);

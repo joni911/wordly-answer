@@ -367,6 +367,11 @@ body {
     }
 }
 
+.board-container.typing-enabled .tile {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 1px #0d6efd;
+}
+
 .modal-overlay {
     position: fixed;
     top: 0;
