@@ -54,10 +54,6 @@ body {
     user-select: none;
 }
 
-.tile.active {
-    border-color: var(--color-filled);
-}
-
 .tile.filled {
     border-color: var(--color-filled);
 }
@@ -105,55 +101,6 @@ body {
 
 .template-spacer {
     min-width: 70px;
-}
-
-.keyboard-container {
-    max-width: 500px;
-    margin: 0 auto;
-}
-
-.keyboard-row {
-    display: flex;
-    justify-content: center;
-    gap: 4px;
-    margin-bottom: 4px;
-}
-
-.key {
-    min-width: 30px;
-    height: 40px;
-    border: none;
-    border-radius: 4px;
-    background-color: #d3d6da;
-    color: #000;
-    font-size: 0.8rem;
-    font-weight: bold;
-    text-transform: uppercase;
-    cursor: pointer;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    transition: background-color 0.2s ease;
-    user-select: none;
-}
-
-.key:hover {
-    background-color: #bbb;
-}
-
-.key.correct {
-    background-color: var(--color-correct);
-    color: #fff;
-}
-
-.key.present {
-    background-color: var(--color-present);
-    color: #fff;
-}
-
-.key.absent {
-    background-color: var(--color-absent);
-    color: #fff;
 }
 
 #mode-selector .btn-group label {
@@ -282,27 +229,12 @@ body {
     min-width: 40px;
 }
 
-#mobile-input {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    height: 40px;
-    opacity: 0;
-    border: none;
-    background: transparent;
-    color: transparent;
-    caret-color: transparent;
-    z-index: 100;
-    font-size: 16px;
-    pointer-events: none;
+#word-input-section input {
+    text-transform: uppercase;
+    letter-spacing: 2px;
 }
 
 @media (max-width: 576px) {
-    #keyboard {
-        display: none !important;
-    }
-
     :root {
         --tile-size: 46px;
         --tile-gap: 5px;
@@ -320,12 +252,6 @@ body {
         font-size: 1.25rem;
     }
 
-    .key {
-        min-width: 28px;
-        height: 38px;
-        font-size: 0.8rem;
-    }
-
     .template-btn {
         min-width: 68px;
         font-size: 0.8rem;
@@ -336,7 +262,7 @@ body {
         min-width: 68px;
     }
 
-    #controls .btn {
+    #controls .btn, #send-btn {
         font-size: 0.9rem;
         padding: 6px 12px;
         margin-bottom: 4px;
@@ -361,27 +287,6 @@ body {
         font-size: 0.85rem;
         padding: 3px 8px;
     }
-
-    #mobile-input {
-        height: 50px;
-    }
-}
-
-.board-container .tile {
-    cursor: not-allowed;
-    opacity: 0.85;
-}
-
-.board-container.typing-enabled .tile {
-    cursor: pointer;
-    opacity: 1;
-    border-color: #0d6efd;
-    box-shadow: 0 0 0 1px #0d6efd;
-}
-
-.board-container.typing-enabled .tile.active-cursor {
-    outline: 3px solid #0d6efd;
-    outline-offset: 2px;
 }
 
 .modal-overlay {

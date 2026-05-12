@@ -1,11 +1,6 @@
 const WordleSolver = (() => {
     const ROWS = 6;
     const COLS = 5;
-    const KEYBOARD_ROWS = [
-        ['q','w','e','r','t','y','u','i','o','p'],
-        ['a','s','d','f','g','h','j','k','l'],
-        ['enter','z','x','c','v','b','n','m','back']
-    ];
     const DEFAULT_TEMPLATES = ['stair', 'lemon', 'pudgy'];
 
     function getTemplates() {
@@ -27,36 +22,15 @@ const WordleSolver = (() => {
 
     let board = [];
     let tileStates = [];
-    let currentRow = 0;
-    let currentCol = 0;
     let possibleWords = [];
     let keyStates = {};
     let guesses = [];
-    let typingEnabled = false;
-
-    function loadTypingState() {
-        try {
-            const saved = localStorage.getItem('wordly-typing');
-            if (saved !== null) {
-                typingEnabled = saved === 'true';
-            }
-        } catch (e) {}
-    }
-
-    function saveTypingState() {
-        try {
-            localStorage.setItem('wordly-typing', String(typingEnabled));
-        } catch (e) {}
-    }
 
     function init() {
-        loadTypingState();
         buildBoard();
-        buildKeyboard();
         buildLetterStats();
         buildFilterLetters();
         bindEvents();
-        applyTypingVisuals();
         loadDictionary();
         applyTranslations();
 
@@ -115,42 +89,11 @@ const WordleSolver = (() => {
             tileStates.push(stateRow);
             guesses.push('');
         }
-
-        updateCurrentRow();
-    }
-
-    function buildKeyboard() {
-        const container = document.getElementById('keyboard-container');
-        container.innerHTML = '';
-        container.className = 'keyboard-container';
-
-        KEYBOARD_ROWS.forEach(row => {
-            const rowEl = document.createElement('div');
-            rowEl.className = 'keyboard-row';
-
-            row.forEach(key => {
-                const btn = document.createElement('button');
-                btn.className = 'key';
-                btn.dataset.key = key;
-
-                if (key === 'enter' || key === 'back') {
-                    btn.classList.add('wide');
-                    btn.textContent = key === 'enter' ? 'Enter' : '\u232B';
-                } else {
-                    btn.textContent = key.toUpperCase();
-                }
-
-                rowEl.appendChild(btn);
-            });
-
-            container.appendChild(rowEl);
-        });
     }
 
     function buildLetterStats() {
         const container = document.getElementById('letter-frequency');
         container.innerHTML = '';
-
         for (const c of 'abcdefghijklmnopqrstuvwxyz') {
             const el = document.createElement('div');
             el.className = 'letter-stat';
@@ -163,7 +106,6 @@ const WordleSolver = (() => {
     function buildFilterLetters() {
         const container = document.getElementById('filter-letters');
         container.innerHTML = '';
-
         for (const c of 'abcdefghijklmnopqrstuvwxyz') {
             const el = document.createElement('div');
             el.className = 'letter-stat';
@@ -174,42 +116,56 @@ const WordleSolver = (() => {
     }
 
     function bindEvents() {
-        document.addEventListener('keydown', handlePhysicalKeyboard);
+        // Word input
+        const wordInput = document.getElementById('word-input');
+        const sendBtn = document.getElementById('send-btn');
 
-        document.getElementById('keyboard-container').addEventListener('click', (e) => {
-            const key = e.target.closest('.key');
-            if (!key) return;
-            handleKeyInput(key.dataset.key);
+        sendBtn.addEventListener('click', () => {
+            sendWord(wordInput.value);
         });
 
+        wordInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                sendWord(wordInput.value);
+            }
+        });
+
+        wordInput.addEventListener('input', (e) => {
+            e.target.value = e.target.value.replace(/[^a-zA-Z]/g, '').toUpperCase();
+        });
+
+        // Board tile click → change color only
         document.getElementById('board').addEventListener('click', (e) => {
             const tile = e.target.closest('.tile');
             if (!tile) return;
             const row = parseInt(tile.dataset.row);
             const col = parseInt(tile.dataset.col);
-
-            // If tile has a letter, always allow mode toggle regardless of typing lock
             if (tile.textContent.trim()) {
                 applyModeToTile(row, col);
-                return;
-            }
-
-            // Only change active typing position if typing is enabled
-            if (typingEnabled) {
-                currentRow = row;
-                currentCol = col;
-                const mobileInput = document.getElementById('mobile-input');
-                if (mobileInput) mobileInput.focus();
             }
         });
 
-        document.getElementById('submit-btn').addEventListener('click', submitGuess);
-        document.getElementById('undo-btn').addEventListener('click', undoLetter);
-        document.getElementById('clear-btn').addEventListener('click', clearBoard);
+        // Controls
+        document.getElementById('undo-btn').addEventListener('click', undoLastLetter);
+        document.getElementById('clear-btn').addEventListener('click', clearLastRow);
         document.getElementById('reset-btn').addEventListener('click', resetGame);
         document.getElementById('edit-template-btn').addEventListener('click', editTemplates);
-        document.getElementById('typing-toggle-btn').addEventListener('click', toggleTyping);
 
+        // Suggestions click → fill word to first empty row
+        document.getElementById('best-suggestions').addEventListener('click', (e) => {
+            const word = e.target.closest('.suggestion-word');
+            if (!word) return;
+            fillWordToFirstEmptyRow(word.dataset.word);
+        });
+
+        document.getElementById('filter-suggestions').addEventListener('click', (e) => {
+            const word = e.target.closest('.suggestion-word');
+            if (!word) return;
+            fillWordToFirstEmptyRow(word.dataset.word);
+        });
+
+        // Template modal
         const templateModal = document.getElementById('template-modal');
         document.getElementById('template-cancel-btn').addEventListener('click', closeTemplateModal);
         document.getElementById('template-save-btn').addEventListener('click', saveTemplateEdit);
@@ -228,182 +184,157 @@ const WordleSolver = (() => {
                 document.getElementById('template-error').classList.add('d-none');
             });
         });
+    }
 
-        document.getElementById('best-suggestions').addEventListener('click', (e) => {
-            const word = e.target.closest('.suggestion-word');
-            if (!word) return;
-            fillWord(word.dataset.word);
-        });
-
-        document.getElementById('filter-suggestions').addEventListener('click', (e) => {
-            const word = e.target.closest('.suggestion-word');
-            if (!word) return;
-            fillWord(word.dataset.word);
-        });
-
-        // Mobile keyboard support
-        const mobileInput = document.getElementById('mobile-input');
-        if (mobileInput) {
-            mobileInput.addEventListener('input', (e) => {
-                if (e.inputType === 'deleteContentBackward' || e.inputType === 'deleteContent') {
-                    handleKeyInput('back');
-                    e.target.value = '';
-                    return;
-                }
-                const val = e.target.value;
-                if (val.length > 0) {
-                    for (const char of val) {
-                        if (/^[a-zA-Z]$/.test(char)) {
-                            handleKeyInput(char.toLowerCase());
-                        }
-                    }
-                    e.target.value = '';
-                }
-            });
-
-            mobileInput.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    handleKeyInput('enter');
-                } else if (e.key === 'Backspace') {
-                    e.preventDefault();
-                    handleKeyInput('back');
-                }
-            });
+    function sendWord(val) {
+        const word = val.trim().toLowerCase();
+        if (word.length !== 5 || !/^[a-z]+$/.test(word)) {
+            showMessage('Please enter a valid 5-letter word (a-z)', 'warning');
+            return;
         }
-    }
 
-    function isModalOpen() {
-        const modal = document.getElementById('template-modal');
-        return modal && modal.classList.contains('show');
-    }
-
-    function applyTypingVisuals() {
-        const btn = document.getElementById('typing-toggle-btn');
-        const boardEl = document.getElementById('board');
-        if (!btn || !boardEl) return;
-        if (typingEnabled) {
-            btn.textContent = 'Disable Typing';
-            btn.classList.remove('btn-outline-dark');
-            btn.classList.add('btn-dark');
-            boardEl.classList.add('typing-enabled');
-        } else {
-            btn.textContent = 'Enable Typing';
-            btn.classList.remove('btn-dark');
-            btn.classList.add('btn-outline-dark');
-            boardEl.classList.remove('typing-enabled');
-        }
-        updateActiveCursor();
-    }
-
-    function updateActiveCursor() {
-        document.querySelectorAll('.tile').forEach(t => t.classList.remove('active-cursor'));
-        if (typingEnabled && currentRow >= 0 && currentRow < ROWS && currentCol >= 0 && currentCol < COLS) {
-            const tile = board[currentRow][currentCol];
-            if (tile && !tile.textContent.trim()) {
-                tile.classList.add('active-cursor');
+        // Find first empty row
+        let targetRow = -1;
+        for (let r = 0; r < ROWS; r++) {
+            if (guesses[r].length === 0) {
+                targetRow = r;
+                break;
             }
         }
-    }
 
-    function toggleTyping() {
-        typingEnabled = !typingEnabled;
-        saveTypingState();
-        applyTypingVisuals();
-        showMessage(typingEnabled ? 'Typing enabled — click any empty tile to type there' : 'Typing disabled — click tiles only to change color', 'info');
-    }
-
-    function handlePhysicalKeyboard(e) {
-        if (isModalOpen()) return;
-        if (!typingEnabled) return;
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            handleKeyInput('enter');
-        } else if (e.key === 'Backspace') {
-            e.preventDefault();
-            handleKeyInput('back');
-        } else if (/^[a-zA-Z]$/.test(e.key)) {
-            handleKeyInput(e.key.toLowerCase());
+        if (targetRow === -1) {
+            showMessage('All rows are full. Clear a row or reset.', 'warning');
+            return;
         }
+
+        fillRow(targetRow, word);
+        document.getElementById('word-input').value = '';
+        document.getElementById('word-input').focus();
     }
 
-    function handleKeyInput(key) {
-        if (isModalOpen()) return;
-        if (!typingEnabled && key !== 'enter') return;
-        if (key === 'enter') {
-            submitGuess();
-        } else if (key === 'back') {
-            undoLetter();
-        } else if (/^[a-z]$/.test(key)) {
-            addLetter(key);
+    function fillRow(row, word) {
+        for (let i = 0; i < COLS; i++) {
+            const tile = board[row][i];
+            tile.textContent = word[i].toUpperCase();
+            tile.classList.add('filled', 'absent');
+            tileStates[row][i] = 'absent';
+            updateKeyState(word[i], 'absent');
         }
+        guesses[row] = word;
+
+        const btn = document.querySelector(`.template-btn[data-row="${row}"]`);
+        if (btn) btn.classList.add('filled');
+
+        recalculate();
     }
 
-    function getMode() {
-        const checked = document.querySelector('input[name="tileMode"]:checked');
-        return checked ? checked.value : 'absent';
+    function fillWordToFirstEmptyRow(word) {
+        let targetRow = -1;
+        for (let r = 0; r < ROWS; r++) {
+            if (guesses[r].length === 0) {
+                targetRow = r;
+                break;
+            }
+        }
+        if (targetRow === -1) {
+            showMessage('All rows are full.', 'warning');
+            return;
+        }
+        fillRow(targetRow, word);
     }
 
-    function addLetter(letter) {
-        if (currentCol >= COLS) {
-            for (let i = 0; i < COLS; i++) {
-                if (!board[currentRow][i].textContent.trim()) {
-                    currentCol = i;
+    function fillTemplate(row) {
+        const templates = getTemplates();
+        const word = templates[row];
+        fillRow(row, word);
+    }
+
+    function undoLastLetter() {
+        // Find the last filled tile (bottom-right most)
+        let lastRow = -1, lastCol = -1;
+        for (let r = ROWS - 1; r >= 0; r--) {
+            if (guesses[r].length === 0) continue;
+            for (let c = COLS - 1; c >= 0; c--) {
+                if (board[r][c].textContent.trim()) {
+                    lastRow = r;
+                    lastCol = c;
                     break;
                 }
             }
-            if (currentCol >= COLS) return;
+            if (lastRow !== -1) break;
         }
 
-        const tile = board[currentRow][currentCol];
-        tile.textContent = letter.toUpperCase();
-        tile.classList.add('filled');
-        tile.classList.remove('correct', 'present', 'absent');
-        tileStates[currentRow][currentCol] = 'none';
-        guesses[currentRow] = getRowWord(currentRow);
-        currentCol++;
-
-        if (currentCol === COLS) {
-            for (let i = 0; i < COLS; i++) {
-                const t = board[currentRow][i];
-                if (!tileStates[currentRow][i] || tileStates[currentRow][i] === 'none') {
-                    t.classList.add('absent');
-                    tileStates[currentRow][i] = 'absent';
-                    updateKeyState(t.textContent.toLowerCase(), 'absent');
-                }
-            }
-            recalculate();
+        if (lastRow === -1) {
+            showMessage('Nothing to undo', 'info');
+            return;
         }
-        updateActiveCursor();
-    }
 
-    function undoLetter() {
-        if (currentCol <= 0) {
-            let found = false;
-            for (let r = currentRow; r >= 0; r--) {
-                let lastFilled = -1;
-                for (let i = COLS - 1; i >= 0; i--) {
-                    if (board[r][i].textContent.trim()) {
-                        lastFilled = i;
-                        break;
-                    }
-                }
-                if (lastFilled >= 0) {
-                    currentRow = r;
-                    currentCol = lastFilled + 1;
-                    found = true;
-                    break;
-                }
-            }
-            if (!found) return;
-        }
-        currentCol--;
-        const tile = board[currentRow][currentCol];
+        const tile = board[lastRow][lastCol];
+        const letter = tile.textContent.toLowerCase();
         tile.textContent = '';
         tile.classList.remove('filled', 'correct', 'present', 'absent');
-        tileStates[currentRow][currentCol] = 'none';
-        guesses[currentRow] = getRowWord(currentRow);
-        updateActiveCursor();
+        tileStates[lastRow][lastCol] = 'none';
+
+        // Rebuild guess string
+        guesses[lastRow] = getRowWord(lastRow);
+
+        // If row is now empty, remove filled class from template btn
+        if (guesses[lastRow].length === 0) {
+            const btn = document.querySelector(`.template-btn[data-row="${lastRow}"]`);
+            if (btn) btn.classList.remove('filled');
+        }
+
+        // Recalculate key states for this letter
+        recalcKeyStates();
+        recalculate();
+    }
+
+    function clearLastRow() {
+        // Find the bottom-most row that has text
+        let targetRow = -1;
+        for (let r = ROWS - 1; r >= 0; r--) {
+            if (guesses[r].length > 0) {
+                targetRow = r;
+                break;
+            }
+        }
+
+        if (targetRow === -1) {
+            showMessage('No rows to clear', 'info');
+            return;
+        }
+
+        for (let c = 0; c < COLS; c++) {
+            const tile = board[targetRow][c];
+            tile.textContent = '';
+            tile.classList.remove('filled', 'correct', 'present', 'absent');
+            tileStates[targetRow][c] = 'none';
+        }
+        guesses[targetRow] = '';
+
+        const btn = document.querySelector(`.template-btn[data-row="${targetRow}"]`);
+        if (btn) btn.classList.remove('filled');
+
+        recalcKeyStates();
+        recalculate();
+    }
+
+    function recalcKeyStates() {
+        keyStates = {};
+        for (let r = 0; r < ROWS; r++) {
+            for (let c = 0; c < COLS; c++) {
+                const letter = board[r][c].textContent.toLowerCase();
+                const state = tileStates[r][c];
+                if (letter && state !== 'none') {
+                    updateKeyState(letter, state);
+                }
+            }
+        }
+        document.querySelectorAll('.key').forEach(k => k.classList.remove('correct', 'present', 'absent'));
+        for (const [letter, state] of Object.entries(keyStates)) {
+            const keyEl = document.querySelector(`.key[data-key="${letter}"]`);
+            if (keyEl) keyEl.classList.add(state);
+        }
     }
 
     function applyModeToTile(row, col) {
@@ -422,14 +353,17 @@ const WordleSolver = (() => {
         recalculate();
     }
 
+    function getMode() {
+        const checked = document.querySelector('input[name="tileMode"]:checked');
+        return checked ? checked.value : 'absent';
+    }
+
     function updateKeyState(letter, state) {
         const priority = { 'correct': 3, 'present': 2, 'absent': 1 };
         const current = keyStates[letter];
-
         if (!current || priority[state] > priority[current]) {
             keyStates[letter] = state;
         }
-
         const keyEl = document.querySelector(`.key[data-key="${letter}"]`);
         if (keyEl) {
             keyEl.classList.remove('correct', 'present', 'absent');
@@ -439,91 +373,8 @@ const WordleSolver = (() => {
         }
     }
 
-    function updateCurrentRow() {
-        for (let r = 0; r < ROWS; r++) {
-            if (guesses[r].length < COLS) {
-                currentRow = r;
-                currentCol = guesses[r].length;
-                return;
-            }
-        }
-        currentRow = ROWS - 1;
-        currentCol = COLS;
-    }
-
     function getRowWord(row) {
         return board[row].map(t => t.textContent).join('').toLowerCase();
-    }
-
-    function fillTemplate(row) {
-        const templates = getTemplates();
-        const word = templates[row];
-        for (let i = 0; i < COLS; i++) {
-            board[row][i].textContent = word[i].toUpperCase();
-            board[row][i].classList.add('filled', 'absent');
-            tileStates[row][i] = 'absent';
-            updateKeyState(word[i], 'absent');
-        }
-        guesses[row] = word;
-
-        const btn = document.querySelector(`.template-btn[data-row="${row}"]`);
-        if (btn) btn.classList.add('filled');
-
-        updateCurrentRow();
-        recalculate();
-    }
-
-    function fillWord(word) {
-        updateCurrentRow();
-        if (currentCol !== 0) return;
-
-        for (let i = 0; i < COLS; i++) {
-            board[currentRow][i].textContent = word[i].toUpperCase();
-            board[currentRow][i].classList.add('filled', 'absent');
-            tileStates[currentRow][i] = 'absent';
-            updateKeyState(word[i], 'absent');
-        }
-        guesses[currentRow] = word;
-        currentCol = COLS;
-        recalculate();
-    }
-
-    function submitGuess() {
-        updateCurrentRow();
-        if (currentCol < COLS) {
-            showMessage(t('enterLetters'), 'warning');
-            return;
-        }
-
-        const guess = getRowWord(currentRow);
-        guesses[currentRow] = guess;
-
-        if (!DictionaryManager.isLoaded()) {
-            showMessage(t('dictNotLoaded'), 'warning');
-            return;
-        }
-
-        const hasFlags = tileStates[currentRow].some(s => s !== 'none');
-        if (!hasFlags) {
-            showMessage(t('setFlags'), 'warning');
-            return;
-        }
-
-        if (tileStates[currentRow].every(s => s === 'correct')) {
-            showMessage(t('wordFound'), 'success');
-            recalculate();
-            return;
-        }
-
-        if (currentRow >= ROWS - 1) {
-            showMessage(t('allRowsUsed'), 'danger');
-            recalculate();
-            return;
-        }
-
-        currentRow++;
-        updateCurrentRow();
-        showMessage(t('nextRow').replace('{row}', currentRow + 1), 'info');
     }
 
     function recalculate() {
@@ -766,9 +617,7 @@ const WordleSolver = (() => {
         setTimeout(() => { msgEl.classList.add('d-none'); }, 3000);
     }
 
-    function clearBoard() {
-        currentRow = 0;
-        currentCol = 0;
+    function resetGame() {
         tileStates = Array.from({ length: ROWS }, () => Array(COLS).fill('none'));
         keyStates = {};
         possibleWords = DictionaryManager.getWords().slice();
@@ -781,7 +630,6 @@ const WordleSolver = (() => {
             }
         }
 
-        document.querySelectorAll('.key').forEach(k => k.classList.remove('correct', 'present', 'absent'));
         document.querySelectorAll('.template-btn').forEach(b => b.classList.remove('filled'));
 
         document.getElementById('best-suggestions').innerHTML = '';
@@ -789,14 +637,11 @@ const WordleSolver = (() => {
         document.getElementById('word-count').textContent = '';
         document.getElementById('message').classList.add('d-none');
         document.getElementById('filter-info').textContent = '';
+        document.getElementById('word-input').value = '';
 
         updateLetterStats();
         updateFilterHints();
         updateRecommendations();
-    }
-
-    function resetGame() {
-        clearBoard();
     }
 
     function updateTemplateButtons() {
@@ -821,6 +666,11 @@ const WordleSolver = (() => {
     function closeTemplateModal() {
         document.getElementById('template-modal').classList.remove('show');
         document.getElementById('template-error').classList.add('d-none');
+    }
+
+    function isModalOpen() {
+        const modal = document.getElementById('template-modal');
+        return modal && modal.classList.contains('show');
     }
 
     function saveTemplateEdit() {
@@ -860,7 +710,7 @@ const WordleSolver = (() => {
         }
     }
 
-    return { init, editTemplates, closeTemplateModal, saveTemplateEdit };
+    return { init };
 })();
 
 document.addEventListener('DOMContentLoaded', () => {
